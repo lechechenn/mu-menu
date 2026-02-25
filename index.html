@@ -45,7 +45,6 @@
             border-radius: 10px;
         }
         
-        /* 響應式書籤重疊設計核心 */
         .bookmark-tab {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
@@ -81,12 +80,6 @@
             border-top: 1px solid rgba(255,255,255,0.3);
         }
 
-        .bookmark-tab-inactive:hover {
-            background: rgba(0, 0, 0, 0.08);
-            transform: translateY(1px);
-            z-index: 20;
-        }
-
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .tap-scale:active { transform: scale(0.96); }
         
@@ -99,19 +92,20 @@
         
         .list-card {
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            height: auto;
         }
         .list-card:hover {
-            transform: translateX(4px);
+            transform: translateY(-4px);
             background-color: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
         }
         
         .loader {
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #2e2e2e;
+            border: 2px solid rgba(0,0,0,0.05);
+            border-top: 2px solid #5a5266;
             border-radius: 50%;
-            width: 14px;
-            height: 14px;
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin {
@@ -119,276 +113,320 @@
             100% { transform: rotate(360deg); }
         }
 
-        .modal-enter-active, .modal-leave-active { transition: opacity 0.3s ease; }
-        .modal-enter-from, .modal-leave-to { opacity: 0; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+        /* 勾選框美化 */
+        .custom-checkbox {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .custom-checkbox:checked {
+            background-color: var(--accent-purple-grey);
+            border-color: var(--accent-purple-grey);
+        }
+        .custom-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 10px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
     </style>
 </head>
-<body class="h-screen w-screen overflow-hidden">
-    <div id="app" class="h-full flex flex-col relative" v-cloak>
+<body class="h-screen w-screen overflow-hidden text-left">
+    <div id="app" class="h-full" v-cloak>
         
-        <!-- 管理提示條 -->
-        <div v-if="isEditMode" class="bg-black text-white p-2 text-center text-[10px] sm:text-xs font-bold tracking-[0.2em] z-[60] shrink-0 uppercase flex items-center justify-center gap-4">
-            <span v-if="isSaving" class="flex items-center gap-2 italic"><div class="loader"></div> 雲端同步中...</span>
-            <span v-else>管理模式：點擊 LOGO、類別、分組或餐點進行編輯</span>
-            <button @click="toggleEditMode" :disabled="isSaving" class="bg-white text-black px-4 py-0.5 rounded-full font-bold hover:bg-gray-200 transition-colors disabled:opacity-50">
-                儲存並預覽
-            </button>
-        </div>
-
-        <!-- 頂部頁首：收窄橫幅高度，維持大字體 -->
-        <header class="px-4 md:px-6 pt-4 md:pt-5 pb-4 md:pb-6 flex justify-between items-center z-40 max-w-7xl mx-auto w-full text-left shrink-0">
-            <div class="flex items-center gap-2 md:gap-6">
-                <!-- 維持巨大的 LOGO 尺寸 -->
-                <div class="relative group shrink-0">
-                    <div class="w-20 h-20 sm:w-28 md:w-52 flex items-center justify-center overflow-hidden transition-transform hover:scale-105">
-                        <img v-if="menu.logo" :src="menu.logo" alt="Logo" class="w-full h-full object-contain" />
-                        <div v-else class="flex flex-col items-center justify-center text-gray-400 text-center border-2 border-dashed border-gray-300 rounded-3xl w-full h-full">
-                            <span><i data-lucide="image" class="w-8 h-8 mb-1"></i></span>
-                            <span class="text-[10px] font-bold tracking-tighter uppercase">LOGO</span>
-                        </div>
-                    </div>
-                    <label v-if="isEditMode" class="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                        <span><i data-lucide="camera" class="w-8 h-8 text-white"></i></span>
-                        <input type="file" class="hidden" accept="image/*" @change="handleLogoUpload">
-                    </label>
-                </div>
-                
-                <!-- 超大標題區域 -->
-                <div class="flex flex-col items-start overflow-hidden">
-                    <h1 class="text-3xl sm:text-4xl md:text-7xl font-bold font-brand tracking-tighter text-left leading-none truncate max-w-[220px] sm:max-w-none" style="color: var(--title-color)">
-                        <span v-if="!isEditMode">{{ menu.storeName }}</span>
-                        <input v-else v-model="menu.storeName" class="bg-black/5 border-b border-[#2e2e2e] outline-none px-2 rounded w-full text-left" style="color: var(--title-color)">
-                    </h1>
-                    <p class="text-[11px] sm:text-[18px] md:text-[24px] font-bold tracking-[0.2em] sm:tracking-[0.5em] uppercase mt-2 md:mt-3 text-left leading-none opacity-80" style="color: var(--title-color)">
-                        <span v-if="!isEditMode">{{ menu.subName }}</span>
-                        <input v-else v-model="menu.subName" class="bg-black/5 border-b border-[#2e2e2e] outline-none px-2 rounded w-full text-left" style="color: var(--title-color)">
-                    </p>
-                </div>
-            </div>
-            
-            <!-- 修改點擊邏輯，增加密碼驗證 -->
-            <button @click="handleAdminAuth" class="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-full bg-black/10 backdrop-blur-md flex items-center justify-center text-[#2e2e2e] shadow-sm border border-black/5 tap-scale shrink-0">
-                <span><i :data-lucide="isEditMode ? 'check' : 'settings'" class="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8"></i></span>
-            </button>
-        </header>
-
-        <!-- 主分類選單：分頁放在左邊並增加 pl 位移 (md:pl-40) 以避開圓弧區域 -->
-        <nav class="max-w-7xl mx-auto w-full flex justify-start pl-14 sm:pl-24 md:pl-40 pt-0 items-end overflow-x-auto whitespace-nowrap z-40 no-scrollbar shrink-0">
-            <div v-for="cat in menu.categories" :key="cat.id" class="flex items-center">
-                <div class="relative group">
-                    <!-- 極致 Fit 的微型標籤外框 -->
-                    <button @click="changeMainCategory(cat.id)"
-                            :class="activeCategory === cat.id ? 'bookmark-tab-active' : 'bookmark-tab-inactive'"
-                            class="bookmark-tab px-3 sm:px-4 md:px-5 pt-1.5 sm:pt-2 md:pt-2.5 pb-1.5 md:pb-2.5 rounded-t-xl sm:rounded-t-[1.5rem] md:rounded-t-[2.5rem] transition-all font-brand relative flex flex-col items-center">
-                        
-                        <!-- 字體微型化：中字 md:text-base, 英字 md:text-[11px] -->
-                        <template v-if="!isEditMode || editingTabId !== cat.id">
-                            <span class="text-[10px] sm:text-base md:text-base font-bold tracking-widest text-center leading-tight">{{ cat.name }}</span>
-                            <span class="text-[7px] sm:text-[10px] md:text-[11px] font-sans uppercase tracking-tighter leading-none mt-1 text-center opacity-90">{{ cat.nameEn }}</span>
-                        </template>
-                        
-                        <!-- 標籤編輯模式 -->
-                        <div v-else class="flex flex-col gap-1 items-center">
-                            <input v-model="cat.name" placeholder="中文" class="bg-black/5 border-b border-gray-400 outline-none px-1 text-[10px] sm:text-base md:text-base w-10 sm:w-16 md:w-20 text-center font-bold">
-                            <input v-model="cat.nameEn" placeholder="ENG" class="bg-black/5 border-b border-gray-400 outline-none px-1 text-[7px] sm:text-[10px] md:text-[11px] w-10 sm:w-16 md:w-20 uppercase text-center">
-                        </div>
-                    </button>
-                    
-                    <div v-if="isEditMode" class="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-[60]">
-                        <button @click="editingTabId = cat.id" class="bg-blue-500 text-white p-1 rounded-full shadow-lg"><span><i data-lucide="edit-2" class="w-3 h-3"></i></span></button>
-                        <button @click="triggerDelete('main-category', cat.id)" class="bg-red-500 text-white p-1 rounded-full shadow-lg"><span><i data-lucide="x" class="w-3 h-3"></i></span></button>
+        <!-- 首屏載入層：防止閃爍舊資料 -->
+        <transition name="fade">
+            <div v-if="!isSystemReady" class="fixed inset-0 z-[100] bg-[#f1f1f1] flex flex-col items-center justify-center">
+                <div class="flex flex-col items-center gap-6">
+                    <div class="loader"></div>
+                    <div class="text-center">
+                        <p class="font-brand text-xl font-bold tracking-[0.5em] text-[#2e2e2e] opacity-40 uppercase">MU TEISHOKU</p>
+                        <p class="text-[10px] tracking-[0.3em] text-gray-400 mt-2 uppercase">System Loading</p>
                     </div>
                 </div>
             </div>
-            
-            <button v-if="isEditMode" @click="addMainCategory" class="mb-2.5 ml-4 bg-black/5 text-gray-400 p-1 rounded-full hover:bg-black/10 transition-colors shrink-0">
-                <span><i data-lucide="plus" class="w-3 h-3 md:w-4 md:h-4"></i></span>
-            </button>
-        </nav>
+        </transition>
 
-        <!-- 滿版內容區塊 -->
-        <main class="flex-grow glass-panel mx-0 sm:mx-4 rounded-t-[2.5rem] sm:rounded-t-[4rem] shadow-2xl overflow-hidden relative flex flex-col z-20">
-            <div class="flex-grow overflow-y-auto scroll-container px-4 pt-8 pb-20 md:px-12 md:pt-16">
-                
-                <!-- 子分類切換器 -->
-                <div class="flex flex-col items-center justify-center mb-10 border-b border-gray-100 pb-10 gap-8 text-center">
-                    <div class="flex flex-wrap items-center justify-center bg-gray-200/50 p-2.5 rounded-2xl sm:rounded-[2.5rem] shadow-inner no-print gap-2 sm:gap-3">
-                        <div v-for="sub in currentSubCategories" :key="sub.id" class="relative group">
-                            <button @click="activeSubCategory = sub.id" 
-                                    :class="activeSubCategory === sub.id ? 'sub-switch-active' : 'text-gray-500 hover:text-gray-700'"
-                                    class="sub-switch-btn px-4 sm:px-6 md:px-10 py-3 sm:py-4 rounded-xl sm:rounded-[2rem] transition-all flex flex-col items-center justify-center whitespace-nowrap min-w-[70px] sm:min-w-[90px] md:min-w-[140px]">
-                                <template v-if="!isEditMode || editingSubTabId !== sub.id">
-                                    <span class="text-sm sm:text-base md:text-xl font-bold tracking-widest text-center leading-tight">{{ sub.name }}</span>
-                                    <span class="text-[9px] sm:text-[13px] md:text-[16px] font-sans uppercase tracking-tighter opacity-100 leading-none mt-1 sm:mt-1.5 text-center">{{ sub.nameEn }}</span>
-                                </template>
-                                <div v-else class="flex flex-col gap-0.5 items-center">
-                                    <input v-model="sub.name" placeholder="中文" class="bg-white/50 border-b border-gray-400 outline-none px-1 w-12 sm:w-16 text-[12px] sm:text-[14px] text-center">
-                                    <input v-model="sub.nameEn" placeholder="ENG" class="bg-white/50 border-b border-gray-400 outline-none px-1 w-12 sm:w-16 text-[9px] sm:text-[12px] uppercase text-center">
-                                </div>
-                            </button>
-                            <div v-if="isEditMode" class="absolute -top-2 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                <button @click="editingSubTabId = sub.id" class="bg-blue-400 text-white p-0.5 rounded-full shadow"><span><i data-lucide="edit-2" class="w-2.5 h-2.5"></i></span></button>
-                                <button @click="triggerDelete('sub-category', sub.id)" class="bg-red-400 text-white p-0.5 rounded-full shadow"><span><i data-lucide="x" class="w-2.5 h-2.5"></i></span></button>
+        <!-- 主程式內容 -->
+        <div v-if="isSystemReady" class="h-full flex flex-col relative animate-in fade-in duration-1000">
+            
+            <!-- 管理提示條 -->
+            <div v-if="isEditMode" class="bg-black text-white p-2 text-center text-[10px] sm:text-xs font-bold tracking-[0.2em] z-[60] shrink-0 uppercase flex items-center justify-center gap-4">
+                <span v-if="isSaving" class="flex items-center gap-2 italic"><div class="loader !w-3 !h-3 !border-t-white"></div> 雲端同步中...</span>
+                <span v-else>管理模式：點擊各項內容進行編輯</span>
+                <button @click="toggleEditMode" :disabled="isSaving" class="bg-white text-black px-4 py-0.5 rounded-full font-bold hover:bg-gray-200 transition-colors disabled:opacity-50">
+                    儲存並預覽
+                </button>
+            </div>
+
+            <!-- 頂部頁首 -->
+            <header class="px-6 md:px-12 lg:px-20 pt-4 md:pt-5 pb-4 md:pb-6 flex justify-between items-center z-40 w-full text-left shrink-0">
+                <div class="flex items-center gap-6 md:gap-12">
+                    <div class="relative group shrink-0">
+                        <div class="h-14 sm:h-24 md:h-36 w-auto flex items-center justify-center overflow-hidden transition-transform hover:scale-105 border border-transparent">
+                            <img v-if="menu.logo" :src="menu.logo" alt="Logo" class="h-full w-auto object-contain scale-110" />
+                            <div v-else class="flex flex-col items-center justify-center text-gray-400 text-center border-2 border-dashed border-gray-300 rounded-3xl h-full px-10">
+                                <span><i data-lucide="image" class="w-6 h-6 md:w-8 md:h-8 mb-1 opacity-50"></i></span>
+                                <span class="text-[5px] md:text-[6px] font-bold tracking-tighter uppercase opacity-50">LOGO</span>
                             </div>
                         </div>
-                        <button v-if="isEditMode" @click="addSubCategory" class="px-3 text-gray-400 hover:text-[#8b8196] transition-colors">
-                            <span><i data-lucide="plus-circle" class="w-6 h-6 sm:w-7 h-7"></i></span>
+                        <label v-if="isEditMode" class="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                            <span><i data-lucide="camera" class="w-6 h-6 md:w-8 md:h-8 text-white"></i></span>
+                            <input type="file" class="hidden" accept="image/*" @change="handleLogoUpload">
+                        </label>
+                    </div>
+                    
+                    <div class="flex flex-col items-start overflow-hidden text-left">
+                        <h1 class="text-xl sm:text-3xl md:text-5xl font-bold font-brand tracking-tighter text-left leading-none truncate max-w-[200px] sm:max-w-none" style="color: var(--title-color)">
+                            <span v-if="!isEditMode">{{ menu.storeName }}</span>
+                            <input v-else v-model="menu.storeName" class="bg-black/5 border-b border-[#2e2e2e] outline-none px-2 rounded w-full text-left" style="color: var(--title-color)">
+                        </h1>
+                        <p class="text-[8px] sm:text-[14px] md:text-[18px] font-bold tracking-[0.2em] sm:tracking-[0.4em] uppercase mt-1 md:mt-2 text-left leading-none opacity-80" style="color: var(--title-color)">
+                            <span v-if="!isEditMode">{{ menu.subName }}</span>
+                            <input v-else v-model="menu.subName" class="bg-black/5 border-b border-[#2e2e2e] outline-none px-2 rounded w-full text-left" style="color: var(--title-color)">
+                        </p>
+                    </div>
+                </div>
+                
+                <button @click="handleAdminAuth" class="w-10 h-10 md:w-16 md:h-16 rounded-full bg-black/10 backdrop-blur-md flex items-center justify-center text-[#2e2e2e] shadow-sm border border-black/5 tap-scale shrink-0">
+                    <span><i :data-lucide="isEditMode ? 'check' : 'settings'" class="w-5 h-5 md:w-8 md:h-8"></i></span>
+                </button>
+            </header>
+
+            <!-- 主分類選單 -->
+            <nav class="max-w-7xl mx-auto w-full flex justify-start px-0 sm:px-4 pl-10 sm:pl-16 md:pl-24 pt-0 items-end overflow-x-auto whitespace-nowrap z-40 no-scrollbar shrink-0">
+                <div v-for="cat in menu.categories" :key="cat.id" class="flex items-center">
+                    <div class="relative group">
+                        <button @click="changeMainCategory(cat.id)"
+                                :class="activeCategory === cat.id ? 'bookmark-tab-active' : 'bookmark-tab-inactive'"
+                                class="bookmark-tab px-3 sm:px-4 md:px-5 pt-1.5 sm:pt-2 md:pt-2.5 pb-1.5 sm:pb-2 md:pb-2.5 rounded-t-xl sm:rounded-t-[1.5rem] md:rounded-t-[2.5rem] transition-all font-brand relative flex flex-col items-center">
+                            <template v-if="!isEditMode || editingTabId !== cat.id">
+                                <span class="text-[10px] sm:text-base md:text-sm font-bold tracking-widest text-center leading-tight">{{ cat.name }}</span>
+                                <span class="text-[7px] sm:text-[10px] md:text-[8px] font-sans uppercase tracking-tighter leading-none mt-1 text-center opacity-90">{{ cat.nameEn }}</span>
+                            </template>
+                            <div v-else class="flex flex-col gap-1 items-center">
+                                <input v-model="cat.name" placeholder="中文" class="bg-black/5 border-b border-gray-400 outline-none px-1 text-[10px] sm:text-base md:text-sm w-10 sm:w-16 md:w-20 text-center font-bold">
+                                <input v-model="cat.nameEn" placeholder="ENG" class="bg-black/5 border-b border-gray-400 outline-none px-1 text-[7px] sm:text-[10px] md:text-[8px] w-10 sm:w-16 md:w-20 uppercase text-center">
+                            </div>
+                        </button>
+                        <div v-if="isEditMode" class="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-[60]">
+                            <button @click="editingTabId = cat.id" class="bg-blue-500 text-white p-1 rounded-full shadow-lg"><span><i data-lucide="edit-2" class="w-3 h-3"></i></span></button>
+                            <button @click="triggerDelete('main-category', cat.id)" class="bg-red-500 text-white p-1 rounded-full shadow-lg"><span><i data-lucide="x" class="w-3 h-3"></i></span></button>
+                        </div>
+                    </div>
+                </div>
+                <button v-if="isEditMode" @click="addMainCategory" class="mb-2.5 ml-4 bg-black/5 text-gray-400 p-1.5 rounded-full hover:bg-black/10 transition-colors shrink-0">
+                    <span><i data-lucide="plus" class="w-3 h-3 md:w-4 md:h-4"></i></span>
+                </button>
+            </nav>
+
+            <!-- 滿版內容區塊 -->
+            <main class="flex-grow glass-panel mx-0 sm:mx-4 rounded-t-[2.5rem] sm:rounded-t-[4rem] shadow-2xl overflow-hidden relative flex flex-col z-20 text-left">
+                <div class="flex-grow overflow-y-auto scroll-container px-4 sm:px-8 md:px-12 lg:px-20 pt-8 pb-20">
+                    
+                    <!-- 子分類切換器 -->
+                    <div class="flex flex-col items-center justify-center mb-10 border-b border-gray-100 pb-10 gap-8 text-center">
+                        <div class="w-full flex items-center justify-center">
+                            <div class="flex flex-nowrap items-center justify-start sm:justify-center bg-gray-200/50 p-1.5 rounded-xl sm:rounded-[2.5rem] shadow-inner no-print gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar max-w-full">
+                                <div v-for="sub in currentSubCategories" :key="sub.id" class="relative group flex-shrink-0">
+                                    <button @click="activeSubCategory = sub.id" 
+                                            :class="activeSubCategory === sub.id ? 'sub-switch-active' : 'text-gray-500 hover:text-gray-700'"
+                                            class="sub-switch-btn px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 rounded-lg sm:rounded-[1.5rem] transition-all flex flex-col items-center justify-center whitespace-nowrap min-w-0 flex-shrink-0">
+                                        <template v-if="!isEditMode || editingSubTabId !== sub.id">
+                                            <span class="text-sm sm:text-base md:text-xl font-bold tracking-widest text-center leading-tight">{{ sub.name }}</span>
+                                            <span class="text-[9px] sm:text-[12px] md:text-[14px] font-sans uppercase tracking-tighter opacity-100 leading-none mt-0.5 sm:mt-1 text-center">{{ sub.nameEn }}</span>
+                                        </template>
+                                        <div v-else class="flex flex-col gap-0.5 items-center">
+                                            <input v-model="sub.name" placeholder="中文" class="bg-white/50 border-b border-gray-400 outline-none px-1 w-10 sm:w-14 text-[12px] sm:text-[14px] text-center">
+                                            <input v-model="sub.nameEn" placeholder="ENG" class="bg-white/50 border-b border-gray-400 outline-none px-1 w-10 sm:w-14 text-[9px] sm:text-[11px] uppercase text-center">
+                                        </div>
+                                    </button>
+                                    <div v-if="isEditMode" class="absolute -top-2 -right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                        <button @click="editingSubTabId = sub.id" class="bg-blue-400 text-white p-0.5 rounded-full shadow"><span><i data-lucide="edit-2" class="w-2.5 h-2.5"></i></span></button>
+                                        <button @click="triggerDelete('sub-category', sub.id)" class="bg-red-400 text-white p-0.5 rounded-full shadow"><span><i data-lucide="x" class="w-2.5 h-2.5"></i></span></button>
+                                    </div>
+                                </div>
+                                <button v-if="isEditMode" @click="addSubCategory" class="px-2 text-gray-400 hover:text-[#8b8196] transition-colors flex-shrink-0">
+                                    <span><i data-lucide="plus-circle" class="w-6 h-6 sm:w-7 h-7"></i></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 定食專屬說明區塊 -->
+                        <div v-if="activeCategory === 'teishoku'" class="flex flex-col items-center animate-in fade-in slide-in-from-top-2 duration-700 w-full mx-auto">
+                            <div class="bg-[#5a5266]/5 border border-[#5a5266]/15 px-4 sm:px-6 py-2 rounded-xl sm:rounded-[1.5rem] shadow-sm text-center w-fit mx-auto">
+                                <template v-if="!isEditMode">
+                                    <p class="text-[#5a5266] font-bold text-sm sm:text-lg md:text-2xl tracking-[0.2em] sm:tracking-[0.4em] mb-0 leading-tight">{{ menu.teishokuDesc }}</p>
+                                    <p class="text-gray-400 text-[10px] sm:text-[14px] md:text-[18px] font-sans uppercase tracking-[0.1em] mt-1 md:mt-1 leading-tight italic">{{ menu.teishokuDescEn }}</p>
+                                    <div class="w-12 sm:w-20 h-[1.5px] bg-[#5a5266]/20 mx-auto my-1"></div>
+                                    <p class="text-gray-500 text-[10px] sm:text-[12px] md:text-[16px] font-medium tracking-wide leading-tight">{{ menu.teishokuRefill }}</p>
+                                    <p class="text-gray-400 text-[8px] sm:text-[10px] md:text-[12px] font-sans uppercase tracking-tighter leading-tight mt-0.5 opacity-80">{{ menu.teishokuRefillEn }}</p>
+                                </template>
+                                <div v-else class="flex flex-col gap-2">
+                                    <div class="space-y-1.5">
+                                        <input v-model="menu.teishokuDesc" class="bg-white/80 border-b border-dashed border-[#5a5266] outline-none text-[#5a5266] px-2 text-center text-sm md:text-xl font-bold w-full" placeholder="附贈說明(中)">
+                                        <input v-model="menu.teishokuDescEn" class="bg-white/80 border-b border-dashed border-gray-300 outline-none text-gray-400 px-2 text-center text-[10px] md:text-sm uppercase tracking-widest w-full" placeholder="DESC(EN)">
+                                    </div>
+                                    <div class="space-y-1 border-t border-gray-100 pt-1.5">
+                                        <input v-model="menu.teishokuRefill" class="bg-white/80 border-b border-dashed border-gray-300 outline-none text-gray-400 px-2 text-center text-[12px] md:text-base w-full" placeholder="續加說明(中)">
+                                        <input v-model="menu.teishokuRefillEn" class="bg-white/80 border-b border-dashed border-gray-200 outline-none text-gray-300 px-2 text-center text-[10px] md:text-xs uppercase tracking-tighter w-full" placeholder="REFILL INFO(EN)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 餐點清單：使用動態雙欄網格並體現推薦、辣味符號 -->
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 sm:gap-10 lg:gap-12">
+                        <div v-for="(item, idx) in displayedItems" :key="item.id" class="list-card group bg-white/70 hover:bg-white rounded-[2.5rem] sm:rounded-[3.5rem] p-6 sm:p-8 border border-gray-100 flex items-center transition-all shadow-sm hover:shadow-xl text-left text-[#333333]">
+                            
+                            <div class="flex-grow flex flex-col justify-center gap-1 overflow-hidden h-full">
+                                <div class="flex flex-col items-start w-full overflow-hidden">
+                                    <!-- 第一列：中文名稱 -->
+                                    <div class="w-full border-b border-gray-100 pb-3 mb-2 flex flex-col">
+                                        <h3 v-if="!isEditMode" class="text-xl sm:text-2xl md:text-3xl font-bold font-brand tracking-wide text-[#1A1A1A] text-left leading-tight whitespace-normal break-words flex items-center flex-wrap">
+                                            {{ item.name }}
+                                            <!-- 推薦符號 -->
+                                            <span v-if="item.isRecommended" class="ml-1.5 text-amber-500 inline-flex items-center" title="推薦">
+                                                <i data-lucide="thumbs-up" class="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-current"></i>
+                                            </span>
+                                            <!-- 辣味符號 -->
+                                            <span v-if="item.isSpicy" class="ml-1 text-red-500 inline-flex items-center" title="辣味">
+                                                <i data-lucide="flame" class="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 fill-current"></i>
+                                            </span>
+                                        </h3>
+                                        <input v-else v-model="item.name" class="text-xl font-bold bg-white/80 border-b border-dashed border-gray-300 outline-none px-1 rounded w-full text-left" placeholder="名稱">
+                                    </div>
+
+                                    <!-- 第二列：英文名稱與價格 -->
+                                    <div class="flex items-end justify-between w-full gap-4 min-h-[1.5em]">
+                                        <div v-if="item.nameEn || isEditMode" class="flex-grow overflow-hidden">
+                                            <p v-if="!isEditMode" class="text-[10px] sm:text-[14px] md:text-[16px] text-gray-400 font-sans uppercase tracking-[0.1em] leading-snug text-left italic whitespace-normal break-words line-clamp-2">
+                                                {{ item.nameEn }}
+                                            </p>
+                                            <input v-if="isEditMode" v-model="item.nameEn" class="text-xs text-gray-400 font-sans uppercase tracking-widest bg-white/80 border-b border-dashed border-gray-200 outline-none px-1 rounded w-full text-left" placeholder="EN NAME">
+                                        </div>
+                                        
+                                        <div v-if="!isEditMode" class="shrink-0 text-right ml-auto self-end">
+                                            <span class="text-[#5a5266] font-bold text-xl sm:text-2xl md:text-3xl tracking-tighter block leading-none whitespace-nowrap">
+                                                <span class="text-xs sm:text-sm mr-0.5 opacity-50 font-sans">NT$</span>{{ item.price }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 編輯模式下的工具區：新增推薦與辣味勾選 -->
+                                <div v-if="isEditMode" class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4 pt-4 border-t border-dashed border-gray-100">
+                                    <div class="flex items-center gap-6">
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-600">
+                                            <input type="checkbox" v-model="item.isRecommended" class="custom-checkbox"> 推薦品項
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-red-600">
+                                            <input type="checkbox" v-model="item.isSpicy" class="custom-checkbox"> 辛辣標記
+                                        </label>
+                                    </div>
+                                    <div class="flex items-center justify-end gap-3">
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs text-[#5a5266] font-bold">NT$</span>
+                                            <input v-model.number="item.price" type="number" class="w-20 sm:w-24 text-right font-bold text-lg bg-white border-b border-dashed border-[#5a5266]/40 outline-none">
+                                        </div>
+                                        <button @click="triggerDelete('item', idx)" class="text-red-400 hover:text-red-600 p-2 transition-colors">
+                                            <span><i data-lucide="trash-2" class="w-5 h-5"></i></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button v-if="isEditMode" @click="addItem" class="w-full border-2 border-dashed border-gray-200 rounded-[3rem] py-12 flex flex-col items-center justify-center text-gray-300 hover:border-[#8b8196] hover:text-[#8b8196] hover:bg-white transition-all bg-white/10 group">
+                            <span><i data-lucide="plus" class="w-10 h-10 mb-3 group-hover:rotate-90 transition-transform"></i></span>
+                            <span class="text-sm font-bold tracking-[0.5em] uppercase text-center">新增菜單品項</span>
                         </button>
                     </div>
 
-                    <!-- 定食專屬說明區塊 (w-fit 置中) -->
-                    <div v-if="activeCategory === 'teishoku'" class="flex flex-col items-center animate-in fade-in slide-in-from-top-2 duration-700 w-full mx-auto">
-                        <div class="bg-[#5a5266]/5 border border-[#5a5266]/15 px-6 sm:px-12 py-4 rounded-2xl sm:rounded-[2.5rem] shadow-sm text-center w-fit mx-auto">
-                            <template v-if="!isEditMode">
-                                <p class="text-[#5a5266] font-bold text-sm sm:text-lg md:text-2xl tracking-[0.2em] sm:tracking-[0.4em] mb-0 leading-tight">{{ menu.teishokuDesc }}</p>
-                                <p class="text-gray-400 text-[10px] sm:text-[14px] md:text-[18px] font-sans uppercase tracking-[0.1em] mt-1 md:mt-1.5 leading-tight italic">{{ menu.teishokuDescEn }}</p>
-                                <div class="w-12 sm:w-20 h-[1.5px] bg-[#5a5266]/20 mx-auto my-2.5"></div>
-                                <p class="text-gray-500 text-[10px] sm:text-[12px] md:text-[16px] font-medium tracking-wide leading-tight">{{ menu.teishokuRefill }}</p>
-                                <p class="text-gray-400 text-[8px] sm:text-[10px] md:text-[12px] font-sans uppercase tracking-tighter leading-tight mt-1 opacity-80">{{ menu.teishokuRefillEn }}</p>
-                            </template>
-                            <div v-else class="flex flex-col gap-4">
-                                <div class="space-y-1.5">
-                                    <input v-model="menu.teishokuDesc" class="bg-white/80 border-b border-dashed border-[#5a5266] outline-none text-[#5a5266] px-2 text-center text-sm md:text-xl font-bold w-full" placeholder="附贈說明(中)">
-                                    <input v-model="menu.teishokuDescEn" class="bg-white/80 border-b border-dashed border-gray-300 outline-none text-gray-400 px-2 text-center text-[10px] md:text-sm uppercase tracking-widest w-full" placeholder="DESC(EN)">
+                    <!-- 資訊頁尾 -->
+                    <footer class="mt-20 sm:mt-32 pt-16 border-t border-gray-100 flex flex-col xl:flex-row justify-between items-start xl:items-end gap-12 opacity-60 text-left">
+                        <div class="flex flex-col gap-8 text-left w-full xl:w-auto">
+                            <div class="flex items-start justify-start gap-4 text-[#B23B2B] font-bold text-[10px] sm:text-[14px] bg-[#B23B2B]/5 px-6 sm:px-10 py-5 rounded-3xl border border-[#B23B2B]/10 w-fit">
+                                <span><i data-lucide="info" class="w-5 h-5 shrink-0 mt-0.5"></i></span>
+                                <span class="leading-relaxed">餐點皆現點現做，請耐心等候；如果您有任何食物過敏原或不耐症，請於點餐時告知我們。</span>
+                            </div>
+                            <div class="flex flex-col sm:flex-row items-start gap-6 sm:gap-16">
+                                <div class="flex items-center gap-4 text-xs sm:text-sm font-bold tracking-widest text-[#5a5266]">
+                                    <span><i data-lucide="map-pin" class="w-4 h-4 text-[#B23B2B]"></i></span>
+                                    <span v-if="!isEditMode">{{ menu.address }}</span>
+                                    <input v-else v-model="menu.address" class="bg-gray-100 border-b border-gray-400 outline-none rounded px-2 text-left">
                                 </div>
-                                <div class="space-y-1.5 border-t border-gray-100 pt-3">
-                                    <input v-model="menu.teishokuRefill" class="bg-white/80 border-b border-dashed border-gray-300 outline-none text-gray-400 px-2 text-center text-[12px] md:text-base w-full" placeholder="續加說明(中)">
-                                    <input v-model="menu.teishokuRefillEn" class="bg-white/80 border-b border-dashed border-gray-200 outline-none text-gray-300 px-2 text-center text-[10px] md:text-xs uppercase tracking-tighter w-full" placeholder="REFILL INFO(EN)">
+                                <div class="flex items-center gap-4 text-xs sm:text-sm font-bold tracking-widest text-[#5a5266]">
+                                    <span><i data-lucide="phone" class="w-4 h-4 text-[#B23B2B]"></i></span>
+                                    <span v-if="!isEditMode">{{ menu.phone }}</span>
+                                    <input v-else v-model="menu.phone" class="bg-gray-100 border-b border-gray-400 outline-none rounded px-2 text-left">
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="flex flex-col items-start md:items-end text-left md:text-right shrink-0">
+                            <p class="text-[10px] sm:text-[12px] text-[#B23B2B] font-bold uppercase tracking-[0.2em] mb-2 text-right">未滿十八歲禁止飲酒。酒後不開車。</p>
+                            <p class="text-[8px] sm:text-[11px] text-gray-500 font-sans tracking-[0.5em] uppercase text-right opacity-60">© 2026 MU TEISHOKU SYSTEM</p>
+                        </div>
+                    </footer>
+                </div>
+            </main>
+
+            <!-- 確認刪除彈窗 -->
+            <transition name="fade">
+                <div v-if="deleteModal.show" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
+                    <div class="bg-[#FAF9F6] w-full max-sm:w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl text-center border-t-8 border-[#5a5266] animate-in zoom-in-95 duration-300">
+                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <span><i data-lucide="alert-triangle" class="w-10 h-10 text-[#5a5266]"></i></span>
+                        </div>
+                        <h3 class="text-xl font-bold font-brand mb-4 text-[#1A1A1A]">確認刪除？</h3>
+                        <p class="text-sm text-gray-500 mb-10 text-center">永久移除「{{ deleteModal.title }}」？</p>
+                        <div class="flex gap-4">
+                            <button @click="deleteModal.show = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 text-sm">取消</button>
+                            <button @click="executeDelete" class="flex-1 py-4 bg-[#5a5266] text-white rounded-2xl font-bold shadow-lg text-sm">確定刪除</button>
                         </div>
                     </div>
                 </div>
+            </transition>
 
-                <!-- 餐點清單 -->
-                <div class="max-w-5xl mx-auto space-y-6 sm:space-y-10">
-                    <div v-for="(item, idx) in displayedItems" :key="item.id" class="list-card group bg-white/70 hover:bg-white rounded-[2rem] sm:rounded-[3.5rem] p-4 sm:p-6 md:p-10 border border-gray-100 flex items-center gap-4 sm:gap-8 md:gap-12 transition-all shadow-sm hover:shadow-md text-left text-[#333333]">
-                        <div class="relative w-24 h-24 sm:w-32 sm:h-32 md:w-48 md:h-48 shrink-0 rounded-2xl sm:rounded-[2.5rem] overflow-hidden bg-gray-50 border border-gray-100 shadow-inner">
-                            <img v-if="item.image" :src="item.image" class="w-full h-full object-cover">
-                            <div v-else class="w-full h-full flex flex-col items-center justify-center text-gray-200">
-                                <span><i data-lucide="utensils" class="w-8 h-8 sm:w-10 sm:h-10 md:w-16 md:h-16 opacity-20"></i></span>
-                            </div>
-                            <label v-if="isEditMode" class="absolute inset-0 bg-black/50 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span><i data-lucide="camera" class="w-8 h-8 text-white"></i></span>
-                                <input type="file" class="hidden" accept="image/*" @change="handleItemImageUpload($event, idx)">
-                            </label>
+            <!-- 密碼驗證彈窗 -->
+            <transition name="fade">
+                <div v-if="showPasswordModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
+                    <div class="bg-[#FAF9F6] w-full max-sm:w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl text-center border-t-8 border-[#8b8196] animate-in zoom-in-95 duration-300">
+                        <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <span><i data-lucide="lock" class="w-10 h-10 text-[#8b8196]"></i></span>
                         </div>
-
-                        <div class="flex-grow flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-6 overflow-hidden">
-                            <div class="flex flex-col items-start flex-grow overflow-hidden text-left">
-                                <div class="flex flex-col items-start w-full">
-                                    <div class="flex flex-wrap items-baseline gap-3 md:gap-6 w-full">
-                                        <h3 v-if="!isEditMode" class="text-xl sm:text-2xl md:text-4xl font-bold font-brand tracking-wide text-[#1A1A1A] truncate max-w-[160px] sm:max-w-none text-left leading-tight">{{ item.name }}</h3>
-                                        <input v-else v-model="item.name" class="text-lg sm:text-xl md:text-3xl font-bold bg-white/80 border-b border-dashed border-gray-300 outline-none px-2 rounded w-full text-left" placeholder="中文名稱">
-                                        <span v-if="!isEditMode" class="md:hidden text-[#5a5266] font-bold text-base sm:text-lg md:text-2xl tracking-tighter">NT$ {{ item.price }}</span>
-                                    </div>
-                                    <div v-if="item.nameEn || isEditMode" class="w-full mt-1 sm:mt-2.5">
-                                        <p v-if="!isEditMode" class="text-[14px] sm:text-[18px] md:text-[24px] text-gray-400 font-sans uppercase tracking-[0.05em] sm:tracking-[0.12em] leading-tight text-left italic">{{ item.nameEn }}</p>
-                                        <input v-if="isEditMode" v-model="item.nameEn" class="text-xs sm:text-base md:text-xl text-gray-400 font-sans uppercase tracking-widest bg-white/80 border-b border-dashed border-gray-200 outline-none px-2 rounded w-full text-left mt-1" placeholder="ENGLISH NAME">
-                                    </div>
-                                </div>
-                                <textarea v-if="isEditMode" v-model="item.description" class="text-xs sm:text-base text-gray-400 mt-3 sm:mt-5 bg-white/80 border border-gray-200 rounded-xl p-3 outline-none w-full text-left" placeholder="餐點描述..."></textarea>
-                                <p v-else class="text-[11px] sm:text-[13px] md:text-[18px] text-gray-400 font-light mt-2 sm:mt-4 line-clamp-1 sm:line-clamp-2 md:line-clamp-none italic text-left leading-relaxed">{{ item.description || '嚴選當季新鮮食材，呈現純粹味覺體驗。' }}</p>
-                            </div>
-
-                            <div class="flex items-center gap-6 md:gap-12 shrink-0 self-end md:self-center">
-                                <div v-if="!isEditMode" class="hidden md:block">
-                                    <span class="text-[#5a5266] font-bold text-4xl tracking-tighter whitespace-nowrap">NT$ {{ item.price }}</span>
-                                </div>
-                                <div v-if="isEditMode" class="flex items-center gap-3 sm:gap-6">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-[12px] text-[#5a5266] font-bold">NT$</span>
-                                        <input v-model.number="item.price" type="number" class="w-16 sm:w-20 md:w-32 text-right font-bold text-lg sm:text-2xl md:text-3xl bg-white border-b border-dashed border-[#5a5266]/40 outline-none px-1">
-                                    </div>
-                                    <button @click="triggerDelete('item', idx)" class="text-red-400 hover:text-red-600 p-2 transition-colors text-center">
-                                        <span><i data-lucide="trash-2" class="w-5 h-5 sm:w-6 sm:h-6 md:w-8 md:h-8"></i></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button v-if="isEditMode" @click="addItem" class="w-full border-2 border-dashed border-gray-300 rounded-[2rem] sm:rounded-[3rem] py-8 sm:py-16 flex flex-col items-center justify-center text-gray-400 hover:border-[#8b8196] hover:text-[#8b8196] hover:bg-white transition-all bg-white/10 group">
-                        <span><i data-lucide="plus" class="w-8 h-8 sm:w-12 sm:h-12 mb-3 group-hover:rotate-90 transition-transform"></i></span>
-                        <span class="text-[12px] sm:text-sm font-bold tracking-[0.4em] uppercase text-center">新增菜單項目</span>
-                    </button>
-                </div>
-
-                <!-- 資訊頁尾 -->
-                <footer class="mt-16 sm:mt-24 pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-end gap-10 sm:gap-12 opacity-60 text-left">
-                    <div class="flex flex-col gap-6 sm:gap-8 text-left max-w-4xl">
+                        <h3 class="text-2xl font-bold font-brand mb-4 text-[#1A1A1A]">管理員驗證</h3>
+                        <p class="text-sm text-gray-500 mb-6 leading-relaxed text-center">請輸入管理密碼以進入編輯模式</p>
                         
-                        <!-- 紅色說明標語：w-fit Fit 寬度 -->
-                        <div class="flex items-start justify-start gap-4 text-[#B23B2B] font-bold text-[10px] sm:text-[14px] bg-[#B23B2B]/5 px-5 sm:px-8 py-4 rounded-2xl border border-[#B23B2B]/10 w-fit">
-                            <span><i data-lucide="info" class="w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5"></i></span>
-                            <span class="leading-relaxed">餐點皆現點現做，請耐心等候；如果您有任何食物過敏原或不耐症，請於點餐時告知我們。</span>
-                        </div>
+                        <input v-model="passwordInput" type="password" 
+                               @keyup.enter="verifyPassword"
+                               :class="passwordError ? 'border-red-500 ring-red-100' : 'border-gray-200 focus:ring-[#8b8196]/20'"
+                               class="w-full px-6 py-4 bg-white border rounded-2xl outline-none focus:ring-4 transition-all mb-4 text-center font-bold tracking-widest"
+                               placeholder="輸入密碼">
+                        
+                        <p v-if="passwordError" class="text-xs text-red-500 mb-6 font-bold text-center">密碼不正確，請重新輸入</p>
 
-                        <!-- 下方：地址與電話 -->
-                        <div class="flex flex-col sm:flex-row items-start gap-6 sm:gap-16">
-                            <div class="flex items-center gap-4 text-xs sm:text-sm font-bold tracking-widest text-[#5a5266]">
-                                <span><i data-lucide="map-pin" class="w-4 h-4 sm:w-5 sm:h-5 text-[#B23B2B]"></i></span>
-                                <span v-if="!isEditMode">{{ menu.address }}</span>
-                                <input v-else v-model="menu.address" class="bg-gray-100 border-b border-gray-400 outline-none rounded px-2 text-left">
-                            </div>
-                            <div class="flex items-center gap-4 text-xs sm:text-sm font-bold tracking-widest text-[#5a5266]">
-                                <span><i data-lucide="phone" class="w-4 h-4 sm:w-5 sm:h-5 text-[#B23B2B]"></i></span>
-                                <span v-if="!isEditMode">{{ menu.phone }}</span>
-                                <input v-else v-model="menu.phone" class="bg-gray-100 border-b border-gray-400 outline-none rounded px-2 text-left">
-                            </div>
+                        <div class="flex gap-4">
+                            <button @click="showPasswordModal = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 transition-colors text-sm">取消</button>
+                            <button @click="verifyPassword" class="flex-1 py-4 bg-[#8b8196] text-white rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all text-sm">確認進入</button>
                         </div>
                     </div>
-
-                    <div class="flex flex-col items-start md:items-end text-left md:text-right shrink-0">
-                        <p class="text-[9px] sm:text-[11px] text-[#B23B2B] font-bold uppercase tracking-widest mb-1.5 text-right">未滿十八歲禁止飲酒。酒後不開車。</p>
-                        <p class="text-[8px] sm:text-[10px] text-gray-500 font-sans tracking-[0.5em] uppercase text-right">© 2026 MU TEISHOKU SYSTEM</p>
-                    </div>
-                </footer>
-            </div>
-        </main>
-
-        <!-- 確認刪除彈窗 -->
-        <transition name="modal">
-            <div v-if="isSystemReady && deleteModal.show" key="delete-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
-                <div class="bg-[#FAF9F6] w-full max-sm:w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl text-center border-t-8 border-[#5a5266] animate-in zoom-in-95 duration-300">
-                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span><i data-lucide="alert-triangle" class="w-10 h-10 text-[#5a5266]"></i></span>
-                    </div>
-                    <h3 class="text-2xl font-bold font-brand mb-4 text-[#1A1A1A]">確認刪除？</h3>
-                    <p class="text-sm text-gray-500 mb-10 leading-relaxed text-center">永久移除「{{ deleteModal.title }}」？</p>
-                    <div class="flex gap-4">
-                        <button @click="deleteModal.show = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 transition-colors text-sm">取消</button>
-                        <button @click="executeDelete" class="flex-1 py-4 bg-[#5a5266] text-white rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all text-sm">確定刪除</button>
-                    </div>
                 </div>
-            </div>
-        </transition>
-
-        <!-- 新增：密碼驗證彈窗 -->
-        <transition name="modal">
-            <div v-if="showPasswordModal" key="password-modal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
-                <div class="bg-[#FAF9F6] w-full max-w-sm rounded-[2.5rem] p-10 shadow-2xl text-center border-t-8 border-[#8b8196] animate-in zoom-in-95 duration-300">
-                    <div class="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span><i data-lucide="lock" class="w-10 h-10 text-[#8b8196]"></i></span>
-                    </div>
-                    <h3 class="text-2xl font-bold font-brand mb-4 text-[#1A1A1A]">管理員驗證</h3>
-                    <p class="text-sm text-gray-500 mb-6 leading-relaxed">請輸入管理密碼以進入編輯模式</p>
-                    
-                    <input v-model="passwordInput" type="password" 
-                           @keyup.enter="verifyPassword"
-                           :class="passwordError ? 'border-red-500 ring-red-100' : 'border-gray-200 focus:ring-[#8b8196]/20'"
-                           class="w-full px-6 py-4 bg-white border rounded-2xl outline-none focus:ring-4 transition-all mb-4 text-center font-bold tracking-widest"
-                           placeholder="輸入密碼">
-                    
-                    <p v-if="passwordError" class="text-xs text-red-500 mb-6 font-bold">密碼不正確，請重新輸入</p>
-
-                    <div class="flex gap-4">
-                        <button @click="showPasswordModal = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 transition-colors">取消</button>
-                        <button @click="verifyPassword" class="flex-1 py-4 bg-[#8b8196] text-white rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all">確認進入</button>
-                    </div>
-                </div>
-            </div>
-        </transition>
-
+            </transition>
+        </div>
     </div>
 
     <!-- Firebase SDKs -->
@@ -425,7 +463,6 @@
                 const activeSubCategory = ref('raw');
                 const user = ref(null);
 
-                // 新增：密碼管理狀態
                 const showPasswordModal = ref(false);
                 const passwordInput = ref('');
                 const passwordError = ref(false);
@@ -461,17 +498,13 @@
                         const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'configs', 'menu');
                         const docSnap = await getDoc(docRef);
                         if (docSnap.exists()) { 
-                            const data = docSnap.data();
-                            if(!data.teishokuDesc) data.teishokuDesc = "均附湯、飯及小菜";
-                            if(!data.teishokuDescEn) data.teishokuDescEn = "ALL SETS INCLUDE SOUP, RICE & SIDE DISHES";
-                            if(!data.teishokuRefill) data.teishokuRefill = "內用湯飯無限量供應 (原碗盛裝)";
-                            if(!data.teishokuRefillEn) data.teishokuRefillEn = "UNLIMITED SOUP & RICE REFILL (ORIGINAL BOWL)";
-                            menu.value = data;
+                            menu.value = docSnap.data();
                         }
                     } catch (err) { console.error("讀取失敗:", err); }
                     finally {
-                        isSystemReady.value = true;
-                        deleteModal.value.show = false;
+                        setTimeout(() => {
+                            isSystemReady.value = true;
+                        }, 500); 
                     }
                 };
 
@@ -486,38 +519,19 @@
                     } finally { isSaving.value = false; }
                 };
 
-                // 管理員驗證處理
                 const handleAdminAuth = () => {
-                    if (isEditMode.value) {
-                        // 如果已經是編輯模式，點擊按鈕代表「儲存並結束」
-                        toggleEditMode();
-                    } else {
-                        // 如果尚未進入，代表要「進入編輯」，彈出密碼視窗
-                        passwordInput.value = '';
-                        passwordError.value = false;
-                        showPasswordModal.value = true;
-                    }
+                    if (isEditMode.value) { toggleEditMode(); } 
+                    else { passwordInput.value = ''; passwordError.value = false; showPasswordModal.value = true; }
                 };
 
-                // 驗證密碼
                 const verifyPassword = () => {
-                    if (passwordInput.value === 'good0722') {
-                        isEditMode.value = true;
-                        showPasswordModal.value = false;
-                        passwordError.value = false;
-                    } else {
-                        passwordError.value = true;
-                    }
+                    if (passwordInput.value === 'good0722') { isEditMode.value = true; showPasswordModal.value = false; passwordError.value = false; } 
+                    else { passwordError.value = true; }
                 };
 
                 const toggleEditMode = async () => {
-                    if (isEditMode.value) { 
-                        await saveMenuData(); 
-                        isEditMode.value = false; 
-                    }
-                    else { 
-                        isEditMode.value = true; 
-                    }
+                    if (isEditMode.value) { await saveMenuData(); isEditMode.value = false; }
+                    else { isEditMode.value = true; }
                 };
 
                 const currentSubCategories = computed(() => {
@@ -529,11 +543,6 @@
                     const main = menu.value.content[activeCategory.value];
                     if (!main || !activeSubCategory.value) return [];
                     return main[activeSubCategory.value] || [];
-                });
-
-                const activeSubCategoryName = computed(() => {
-                    const sub = currentSubCategories.value.find(s => s.id === activeSubCategory.value);
-                    return sub ? sub.name : '';
                 });
 
                 const changeMainCategory = (id) => {
@@ -572,7 +581,6 @@
                         deleteModal.value.index = target;
                     }
                     deleteModal.value.show = true;
-                    nextTick(() => lucide.createIcons());
                 };
 
                 const executeDelete = () => {
@@ -596,9 +604,9 @@
                         id: Date.now(), 
                         name: '新餐點', 
                         nameEn: 'NEW DISH',
-                        price: 0, 
-                        description: '', 
-                        image: null 
+                        price: 0,
+                        isRecommended: false,
+                        isSpicy: false
                     });
                 };
 
@@ -611,18 +619,7 @@
                     }
                 };
 
-                const handleItemImageUpload = (e, idx) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const r = new FileReader();
-                        r.onload = (ev) => displayedItems.value[idx].image = ev.target.result;
-                        r.readAsDataURL(file);
-                    }
-                };
-
                 onMounted(async () => {
-                    isSystemReady.value = false;
-                    deleteModal.value.show = false;
                     lucide.createIcons();
                     try {
                         await signInAnonymously(auth);
@@ -630,19 +627,16 @@
                             user.value = u;
                             if (u) loadMenuData();
                         });
-                    } catch (err) { 
-                        console.error(err); 
-                        isSystemReady.value = true; 
-                    }
+                    } catch (err) { console.error(err); isSystemReady.value = true; }
                 });
 
                 onUpdated(() => nextTick(() => lucide.createIcons()));
 
                 return {
                     isEditMode, isSaving, isSystemReady, editingTabId, editingSubTabId, activeCategory, activeSubCategory, menu, 
-                    displayedItems, currentSubCategories, activeSubCategoryName, deleteModal,
+                    displayedItems, currentSubCategories, deleteModal,
                     showPasswordModal, passwordInput, passwordError, handleAdminAuth, verifyPassword,
-                    toggleEditMode, changeMainCategory, addMainCategory, addSubCategory, triggerDelete, executeDelete, addItem, handleLogoUpload, handleItemImageUpload
+                    toggleEditMode, changeMainCategory, addMainCategory, addSubCategory, triggerDelete, executeDelete, addItem, handleLogoUpload
                 };
             }
         }).mount('#app');
