@@ -176,7 +176,10 @@
             <!-- 頂部頁首 -->
             <header class="w-full px-4 sm:px-8 lg:px-12 pt-1.5 md:pt-2 pb-1 flex justify-between items-center z-40 shrink-0">
                 <div class="flex items-center gap-3 md:gap-6 text-left">
-                    <div class="relative group shrink-0 text-left">
+                    <!-- LOGO 區域改為後台入口 -->
+                    <div class="relative group shrink-0 text-left" 
+                         :class="!isEditMode ? 'cursor-pointer' : ''"
+                         @click="!isEditMode && handleAdminAuth()">
                         <div class="h-12 sm:h-16 md:h-20 w-auto flex items-center justify-center overflow-hidden transition-transform hover:scale-105 border border-transparent text-left">
                             <img v-if="menu.logo" :src="menu.logo" alt="Logo" class="h-full w-auto object-contain scale-110" />
                             <div v-else class="flex flex-col items-center justify-center text-gray-400 text-center border-2 border-dashed border-gray-300 rounded-3xl h-full px-6 text-center text-center">
@@ -184,6 +187,7 @@
                                 <span class="text-[5px] md:text-[6px] font-bold tracking-tighter uppercase opacity-50 text-center text-center">LOGO</span>
                             </div>
                         </div>
+                        <!-- 編輯模式下顯示更換 LOGO 標籤 -->
                         <label v-if="isEditMode" class="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl text-center text-center text-center">
                             <i data-lucide="camera" class="w-5 h-5 md:w-7 md:h-7 text-white text-center"></i>
                             <input type="file" class="hidden text-center" accept="image/*" @change="handleLogoUpload">
@@ -209,9 +213,7 @@
                         </h1>
                     </div>
                 </div>
-                <button @click="handleAdminAuth" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-black/10 backdrop-blur-md flex items-center justify-center text-[#2e2e2e] shadow-sm border border-black/5 tap-scale shrink-0 text-center text-center text-center">
-                    <i :data-lucide="isEditMode ? 'check' : 'settings'" class="w-4 h-4 md:w-5 md:h-5 text-center text-center text-center"></i>
-                </button>
+                <!-- 移除原有的 settings button -->
             </header>
 
             <!-- 分類標籤導覽 -->
@@ -226,13 +228,13 @@
                                 <span class="text-[6px] sm:text-[8px] md:text-[9px] font-sans uppercase tracking-tighter mt-0.5 opacity-70 text-center text-center text-center">{{ cat.nameEn }}</span>
                             </template>
                             <div v-else class="flex flex-col gap-0.5 items-center text-center text-center text-center">
-                                <input v-model="cat.name" placeholder="中文" class="bg-black/5 border-b border-gray-400 outline-none px-1 text-xs sm:text-lg w-10 sm:w-20 text-center font-bold text-center text-center">
+                                <input v-model="cat.name" placeholder="中文" class="bg-black/5 border-b border-gray-400 outline-none px-1 text-xs sm:text-lg w-10 sm:w-20 text-center font-bold text-center text-center text-center">
                                 <input v-model="cat.nameEn" placeholder="ENG" class="bg-black/5 border-b border-gray-400 outline-none px-1 text-[6px] sm:text-[8px] w-10 sm:w-20 uppercase text-center text-center text-center">
                             </div>
                         </button>
                         <div v-if="isEditMode" class="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-[60] text-center text-center text-center text-center">
                             <button @click="editingTabId = cat.id" class="bg-blue-500 text-white p-1 rounded-full shadow-lg text-center text-center text-center"><i data-lucide="edit-2" class="w-3 h-3 text-center text-center text-center"></i></button>
-                            <button @click="triggerDelete('main-category', cat.id)" class="bg-red-500 text-white p-1 rounded-full shadow-lg text-center text-center text-center text-center"><span><i data-lucide="x" class="w-3 h-3 text-center text-center text-center"></i></span></button>
+                            <button @click="triggerDelete('main-category', cat.id)" class="bg-red-500 text-white p-1 rounded-full shadow-lg text-center text-center text-center text-center text-center text-center"><span><i data-lucide="x" class="w-3 h-3 text-center text-center text-center"></i></span></button>
                         </div>
                     </div>
                 </div>
@@ -255,7 +257,7 @@
                                             class="px-4 sm:px-6 md:px-8 py-1.5 sm:py-2 rounded-lg sm:rounded-[1.5rem] transition-all flex flex-col items-center justify-center whitespace-nowrap min-w-0 text-left text-left">
                                         <template v-if="!isEditMode || editingSubTabId !== sub.id">
                                             <span class="text-sm sm:text-lg md:text-xl font-bold tracking-widest text-center text-center text-center text-center text-center">{{ sub.name }}</span>
-                                            <span class="text-[8px] sm:text-[10px] font-sans uppercase tracking-tighter opacity-100 mt-0.5 text-center text-center text-center text-center text-center">{{ sub.nameEn }}</span>
+                                            <span class="text-[8px] sm:text-[10px] font-sans uppercase tracking-tighter opacity-100 mt-0.5 text-center text-center text-center text-center text-center text-center">{{ sub.nameEn }}</span>
                                         </template>
                                         <div v-else class="flex flex-col gap-0.5 items-center text-center text-center text-center text-center text-center text-center text-center">
                                             <input v-model="sub.name" placeholder="中文" class="bg-white/50 border-b border-gray-400 outline-none px-1 w-10 sm:w-16 text-xs sm:text-base text-center text-center text-center">
@@ -268,7 +270,7 @@
                                     </div>
                                 </div>
                                 <button v-if="isEditMode" @click="addSubCategory" class="px-2 text-gray-400 hover:text-[#8b8196] flex-shrink-0 text-center text-center text-center text-center text-center">
-                                    <span><i data-lucide="plus-circle" class="w-6 h-6 sm:w-8 h-8 text-center text-center"></i></span>
+                                    <span><i data-lucide="plus-circle" class="w-6 h-6 sm:w-8 h-8 text-center text-center text-center text-center text-center"></i></span>
                                 </button>
                             </div>
                         </div>
@@ -286,7 +288,7 @@
                                 <div v-else class="flex flex-col gap-2 text-center text-left text-left text-left text-left text-left text-left text-left text-left">
                                     <div class="space-y-1 text-center text-left text-left text-left text-left text-left text-left">
                                         <input v-model="menu.teishokuDesc" class="bg-white/80 border-b border-dashed border-[#5a5266] outline-none text-[#5a5266] px-2 text-center text-sm md:text-lg font-bold w-full text-left" placeholder="附贈說明(中)">
-                                        <input v-model="menu.teishokuDescEn" class="bg-white/80 border-b border-dashed border-gray-300 outline-none text-gray-400 px-2 text-center text-[9px] md:text-xs uppercase tracking-widest w-full text-left text-left" placeholder="DESC(EN)">
+                                        <input v-model="menu.teishokuDescEn" class="bg-white/80 border-b border-dashed border-gray-300 outline-none text-gray-400 px-2 text-center text-[9px] md:text-xs uppercase tracking-widest w-full text-left text-left text-left" placeholder="DESC(EN)">
                                     </div>
                                     <div class="space-y-1 border-t border-gray-100 pt-1 text-center text-left text-left">
                                         <input v-model="menu.teishokuRefill" class="bg-white/80 border-b border-dashed border-gray-300 outline-none text-gray-400 px-2 text-center text-[10px] md:text-sm w-full text-left text-left" placeholder="續加說明(中)">
@@ -327,72 +329,72 @@
                                                 </svg>
                                             </span>
                                         </h3>
-                                        <input v-else v-model="item.name" class="text-lg font-bold bg-white/80 border-b border-dashed border-gray-300 outline-none px-1 rounded w-full text-left text-left text-left">
+                                        <input v-else v-model="item.name" class="text-lg font-bold bg-white/80 border-b border-dashed border-gray-300 outline-none px-1 rounded w-full text-left text-left text-left text-left">
                                     </div>
 
                                     <div class="flex items-end justify-between w-full gap-4 min-h-[1.2em] text-left text-left text-left text-left text-left">
-                                        <div v-if="item.nameEn || isEditMode" class="flex-grow overflow-hidden text-left text-left text-left text-left text-left text-left text-left text-left text-left">
-                                            <p v-if="!isEditMode" class="text-[9px] sm:text-[11px] md:text-[13px] text-gray-400 font-sans uppercase tracking-[0.1em] leading-snug italic whitespace-normal break-words line-clamp-2 text-left text-left text-left">
+                                        <div v-if="item.nameEn || isEditMode" class="flex-grow overflow-hidden text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
+                                            <p v-if="!isEditMode" class="text-[9px] sm:text-[11px] md:text-[13px] text-gray-400 font-sans uppercase tracking-[0.1em] leading-snug italic whitespace-normal break-words line-clamp-2">
                                                 {{ item.nameEn }}
                                             </p>
                                             <input v-if="isEditMode" v-model="item.nameEn" class="text-xs text-gray-400 font-sans uppercase tracking-widest bg-white/80 border-b border-dashed border-gray-200 outline-none px-1 rounded w-full text-left text-left text-left text-left text-left">
                                         </div>
-                                        <div v-if="!isEditMode" class="shrink-0 text-right ml-auto self-end text-right text-right text-right text-right text-right text-right text-right text-right text-right">
-                                            <span class="text-[#5a5266] font-bold text-lg sm:text-xl md:text-2xl tracking-tighter block leading-none whitespace-nowrap text-right text-right text-right text-right text-right text-right text-right text-right">
+                                        <div v-if="!isEditMode" class="shrink-0 text-right ml-auto self-end text-right text-right text-right text-right text-right text-right text-right text-right">
+                                            <span class="text-[#5a5266] font-bold text-lg sm:text-xl md:text-2xl tracking-tighter block leading-none whitespace-nowrap text-right text-right text-right text-right text-right text-right">
                                                 <span class="text-[9px] sm:text-[11px] mr-0.5 font-sans opacity-50 text-right text-right text-right text-right text-right">NT$</span>{{ item.price }}
                                             </span>
                                         </div>
                                     </div>
 
                                     <!-- 口味標籤：字體放大 -->
-                                    <div v-if="item.flavors || isEditMode" class="mt-1 w-full flex flex-wrap gap-1.5 text-left text-left text-left text-left text-left text-left text-left text-left text-left">
-                                        <div v-if="!isEditMode" class="bg-gray-100 px-2 py-0.5 rounded-lg flex items-center gap-1.5 opacity-70 text-left text-left text-left text-left text-left text-left text-left text-left">
+                                    <div v-if="item.flavors || isEditMode" class="mt-1 w-full flex flex-wrap gap-1.5 text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
+                                        <div v-if="!isEditMode" class="bg-gray-100 px-2 py-0.5 rounded-lg flex items-center gap-1.5 opacity-70 text-left text-left text-left text-left text-left text-left text-left text-left text-left">
                                             <i data-lucide="tag" class="w-3 h-3 text-gray-400 text-center text-center text-center text-center"></i>
-                                            <span class="text-[11px] sm:text-[13px] font-medium text-gray-600 tracking-tight text-left text-left text-left text-left text-left text-left text-left">{{ item.flavors }}</span>
+                                            <span class="text-[11px] sm:text-[13px] font-medium text-gray-600 tracking-tight text-left text-left text-left text-left text-left text-left text-left text-left">{{ item.flavors }}</span>
                                         </div>
-                                        <div v-if="isEditMode" class="w-full flex items-center gap-2 bg-gray-50 px-2 py-1.5 rounded-lg text-left text-left text-left text-left text-left text-left text-left text-left">
-                                            <i data-lucide="tag" class="w-3.5 h-3.5 text-gray-300 text-center text-center text-center text-center text-center"></i>
+                                        <div v-if="isEditMode" class="w-full flex items-center gap-2 bg-gray-50 px-2 py-1.5 rounded-lg text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
+                                            <i data-lucide="tag" class="w-3.5 h-3.5 text-gray-300 text-center text-center text-center text-center text-center text-center text-center text-center text-center"></i>
                                             <input v-model="item.flavors" placeholder="口味標示 (例如：柚子/原味/去冰)" class="bg-transparent border-b border-dashed border-gray-300 outline-none text-[12px] text-gray-500 w-full font-bold text-left text-left text-left text-left text-left">
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <div v-if="isEditMode" class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-2 pt-2 border-t border-dashed border-gray-100 text-left text-left text-left text-left text-left text-left text-left">
-                                    <div class="flex items-center gap-6 text-left text-left text-left text-left text-left text-left text-left text-left text-left">
-                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-600 text-left text-left text-left text-left text-left">
-                                            <input type="checkbox" v-model="item.isRecommended" class="custom-checkbox text-left text-left text-left text-left text-left text-left"> 推薦 (星星)
+                                    <div class="flex items-center gap-6 text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-amber-600">
+                                            <input type="checkbox" v-model="item.isRecommended" class="custom-checkbox text-left text-left text-left text-left text-left text-left text-left"> 推薦 (星星)
                                         </label>
-                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-red-600 text-left text-left text-left text-left text-left text-left text-left">
-                                            <input type="checkbox" v-model="item.isSpicy" class="custom-checkbox text-left text-left text-left text-left text-left text-left"> 辣味 (辣椒)
+                                        <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-red-600 text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
+                                            <input type="checkbox" v-model="item.isSpicy" class="custom-checkbox text-left text-left text-left text-left text-left text-left text-left text-left"> 辣味 (辣椒)
                                         </label>
                                     </div>
-                                    <div class="flex items-center justify-end gap-3 text-left text-left text-left text-left text-left text-left text-left">
-                                        <div class="flex items-center gap-1 text-left text-left text-left text-left text-left text-left text-left">
-                                            <span class="text-xs text-[#5a5266] font-bold text-right text-left text-left text-left text-left">NT$</span>
-                                            <input v-model.number="item.price" type="number" class="w-20 sm:w-24 text-right font-bold text-lg bg-white border-b border-dashed border-[#5a5266]/40 outline-none text-right text-right text-right text-right text-right">
+                                    <div class="flex items-center justify-end gap-3 text-left text-left text-left text-left text-left text-left text-left text-left text-left">
+                                        <div class="flex items-center gap-1 text-left text-left text-left text-left text-left text-left text-left text-left text-left">
+                                            <span class="text-xs text-[#5a5266] font-bold text-right text-left text-left text-left text-left text-left text-left">NT$</span>
+                                            <input v-model.number="item.price" type="number" class="w-20 sm:w-24 text-right font-bold text-lg bg-white border-b border-dashed border-[#5a5266]/40 outline-none text-right text-right text-right text-right text-right text-right text-right text-right">
                                         </div>
-                                        <button @click="triggerDelete('item', idx)" class="text-red-400 hover:text-red-600 p-2 transition-colors text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                                            <span><i data-lucide="trash-2" class="w-5 h-5 text-center text-center text-center text-center"></i></span>
+                                        <button @click="triggerDelete('item', idx)" class="text-red-400 hover:text-red-600 p-2 transition-colors text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                                            <span><i data-lucide="trash-2" class="w-5 h-5 text-center text-center text-center text-center text-center text-center text-center"></i></span>
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <button v-if="isEditMode" @click="addItem" class="w-full border-2 border-dashed border-gray-200 rounded-2xl py-6 flex flex-col items-center justify-center text-gray-300 hover:border-[#8b8196] hover:text-[#8b8196] hover:bg-white transition-all bg-white/10 group text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                            <span><i data-lucide="plus" class="w-8 h-8 mb-2 group-hover:rotate-90 transition-transform text-center text-center text-center text-center text-center"></i></span>
-                            <span class="text-[10px] font-bold tracking-[0.4em] uppercase text-center text-center text-center text-center">新增菜單品項</span>
+                        <button v-if="isEditMode" @click="addItem" class="w-full border-2 border-dashed border-gray-200 rounded-2xl py-6 flex flex-col items-center justify-center text-gray-300 hover:border-[#8b8196] hover:text-[#8b8196] hover:bg-white transition-all bg-white/10 group text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                            <span><i data-lucide="plus" class="w-8 h-8 mb-2 group-hover:rotate-90 transition-transform text-center text-center text-center text-center text-center text-center text-center text-center"></i></span>
+                            <span class="text-[10px] font-bold tracking-[0.4em] uppercase text-center text-center text-center text-center text-center text-center text-center text-center">新增菜單品項</span>
                         </button>
                     </div>
 
-                    <!-- 酒精性飲料警語：改成可管理模式 -->
-                    <div v-if="activeCategory === 'drinks' && activeSubCategory === 'alc'" class="mt-8 text-right border-t border-dashed border-red-100 pt-5 text-right text-right text-right text-right text-right text-right">
+                    <!-- 酒精性飲料警語：管理模式 -->
+                    <div v-if="activeCategory === 'drinks' && activeSubCategory === 'alc'" class="mt-8 text-right border-t border-dashed border-red-100 pt-5 text-right text-right text-right text-right text-right text-right text-right">
                          <div class="flex flex-col items-end gap-1.5">
                              <div v-for="(alcNotice, aIdx) in menu.alcoholNotices" :key="alcNotice.id" 
                                   class="flex items-center justify-end gap-3 text-[9px] sm:text-[11px] md:text-[12px] text-[#B23B2B] font-bold tracking-[0.05em] leading-tight group">
                                  <template v-if="!isEditMode">
                                      <p>{{ alcNotice.text }}</p>
                                  </template>
-                                 <div v-else class="flex items-center gap-2">
+                                 <div v-else class="flex items-center gap-2 text-right">
                                      <input v-model="alcNotice.text" class="bg-transparent border-b border-dashed border-[#B23B2B]/40 outline-none text-right font-bold w-48 sm:w-64" placeholder="酒精提醒標語">
                                      <button @click="triggerDelete('alcohol-notice', aIdx)" class="text-[#B23B2B] opacity-40 hover:opacity-100 transition-opacity p-0.5">
                                          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -400,8 +402,8 @@
                                  </div>
                              </div>
                              <button v-if="isEditMode" @click="addAlcoholNotice" 
-                                     class="mt-2 text-[9px] font-bold text-gray-400 border border-dashed border-gray-300 px-3 py-1.5 rounded-full hover:bg-white hover:text-[#5a5266] transition-all w-fit">
-                                 <i data-lucide="plus" class="w-3 h-3 inline mr-1"></i> 新增標語
+                                     class="mt-2 text-[9px] font-bold text-gray-400 border border-dashed border-gray-300 px-3 py-1.5 rounded-full hover:bg-white hover:text-[#5a5266] transition-all w-fit text-center">
+                                 <i data-lucide="plus" class="w-3 h-3 inline mr-1 text-center"></i> 新增標語
                              </button>
                          </div>
                     </div>
@@ -411,28 +413,28 @@
                         <div class="flex flex-col gap-2.5 text-left w-full xl:w-auto text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
                             <div v-for="(notice, nIdx) in menu.footerNotices" :key="notice.id" 
                                  class="flex items-center justify-start gap-3 text-[#B23B2B] font-bold text-[9px] sm:text-[12px] bg-[#B23B2B]/5 px-4 py-1.5 rounded-xl border border-[#B23B2B]/10 w-fit group text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
-                                <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center"></i>
+                                <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center"></i>
                                 <div class="flex-grow flex items-center gap-3 text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
                                     <div v-if="!isEditMode" class="flex flex-col text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
                                         <span class="leading-relaxed">{{ notice.text }}</span>
-                                        <span v-if="notice.textEn" class="text-[7px] sm:text-[9px] opacity-70 font-sans uppercase italic leading-tight text-left text-left text-left text-left text-left text-left text-left text-left">{{ notice.textEn }}</span>
+                                        <span v-if="notice.textEn" class="text-[7px] sm:text-[9px] opacity-70 font-sans uppercase italic leading-tight text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">{{ notice.textEn }}</span>
                                     </div>
                                     <div v-else class="flex-grow flex flex-col gap-1 text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left text-left">
-                                        <input v-model="notice.text" class="bg-transparent border-b border-dashed border-[#B23B2B]/40 outline-none w-full font-bold text-left text-left text-left text-left" placeholder="中文字幕">
+                                        <input v-model="notice.text" class="bg-transparent border-b border-dashed border-[#B23B2B]/40 outline-none w-full font-bold text-left text-left text-left text-left text-left" placeholder="中文字幕">
                                         <input v-model="notice.textEn" class="bg-transparent border-b border-dashed border-[#B23B2B]/20 outline-none w-full font-normal text-[8px] text-red-700/60 text-left text-left text-left text-left text-left" placeholder="English caption">
                                     </div>
                                     <button v-if="isEditMode" @click="triggerDelete('footer-notice', nIdx)" 
                                             class="text-[#B23B2B] opacity-40 hover:opacity-100 transition-opacity p-1 text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                                        <i data-lucide="trash-2" class="w-3.5 h-3.5 text-center text-center text-center text-center text-center text-center text-center text-center"></i>
+                                        <i data-lucide="trash-2" class="w-3.5 h-3.5 text-center text-center text-center text-center text-center text-center text-center text-center text-center"></i>
                                     </button>
                                 </div>
                             </div>
                             <button v-if="isEditMode" @click="addFooterNotice" 
                                     class="text-[9px] font-bold text-gray-400 border border-dashed border-gray-300 px-3 py-1.5 rounded-full hover:bg-white hover:text-[#5a5266] transition-all w-fit text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                                <i data-lucide="plus" class="w-3 h-3 inline mr-1 text-center text-center text-center text-center"></i> 新增說明欄
+                                <i data-lucide="plus" class="w-3 h-3 inline mr-1 text-center text-center text-center text-center text-center text-center text-center text-center text-center"></i> 新增說明欄
                             </button>
-                            <div class="mt-6 text-center w-full text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                                <p class="text-[7px] sm:text-[9px] text-gray-500 font-sans tracking-[0.4em] uppercase opacity-80 text-center text-center text-center text-center text-center text-center text-center text-center text-center">© 2026 MU TEISHOKU SYSTEM</p>
+                            <div class="mt-6 text-center w-full text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                                <p class="text-[7px] sm:text-[9px] text-gray-500 font-sans tracking-[0.4em] uppercase opacity-80 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">© 2026 MU TEISHOKU SYSTEM</p>
                             </div>
                         </div>
                     </footer>
@@ -441,15 +443,15 @@
 
             <!-- 確認刪除彈窗 -->
             <transition name="fade">
-                <div v-if="deleteModal.show" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                    <div class="bg-[#FAF9F6] w-full max-sm:w-full max-w-sm rounded-[2rem] p-8 shadow-2xl text-center border-t-4 border-[#5a5266] animate-in zoom-in-95 duration-300 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                        <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                            <span><i data-lucide="alert-triangle" class="w-10 h-10 text-[#5a5266] text-center text-center text-center text-center text-center text-center text-center text-center"></i></span>
+                <div v-if="deleteModal.show" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                    <div class="bg-[#FAF9F6] w-full max-sm:w-full max-w-sm rounded-[2rem] p-8 shadow-2xl text-center border-t-4 border-[#5a5266] animate-in zoom-in-95 duration-300 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                        <div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                            <span><i data-lucide="alert-triangle" class="w-10 h-10 text-[#5a5266] text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center"></i></span>
                         </div>
-                        <h3 class="text-xl font-bold font-brand mb-4 text-[#1A1A1A] text-center text-center text-center text-center text-center">確認刪除？</h3>
-                        <p class="text-sm text-gray-500 mb-10 text-center text-center text-center text-center text-center text-center">永久移除「{{ deleteModal.title }}」？</p>
-                        <div class="flex gap-4 justify-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                            <button @click="deleteModal.show = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 text-sm text-center text-center">取消</button>
+                        <h3 class="text-xl font-bold font-brand mb-4 text-[#1A1A1A] text-center text-center text-center text-center text-center text-center text-center text-center text-center">確認刪除？</h3>
+                        <p class="text-sm text-gray-500 mb-10 text-center text-center text-center text-center text-center text-center text-center text-center text-center">永久移除「{{ deleteModal.title }}」？</p>
+                        <div class="flex gap-4 justify-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                            <button @click="deleteModal.show = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 text-sm text-center text-center text-center text-center">取消</button>
                             <button @click="executeDelete" class="flex-1 py-4 bg-[#5a5266] text-white rounded-2xl font-bold shadow-lg text-sm text-center text-center text-center text-center text-center">確定刪除</button>
                         </div>
                     </div>
@@ -458,21 +460,21 @@
 
             <!-- 密碼驗證彈窗 -->
             <transition name="fade">
-                <div v-if="showPasswordModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md text-center text-center text-center text-center text-center">
-                    <div class="bg-[#FAF9F6] w-full max-sm:w-full max-w-sm rounded-[2rem] p-10 shadow-2xl text-center border-t-8 border-[#8b8196] animate-in zoom-in-95 duration-300 text-center text-center text-center text-center text-center text-center text-center text-center">
-                        <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
-                            <i data-lucide="lock" class="w-10 h-10 text-[#8b8196] text-center text-center text-center text-center"></i>
+                <div v-if="showPasswordModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md text-center text-center text-center text-center text-center text-center">
+                    <div class="bg-[#FAF9F6] w-full max-sm:w-full max-w-sm rounded-[2rem] p-10 shadow-2xl text-center border-t-8 border-[#8b8196] animate-in zoom-in-95 duration-300 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                        <div class="w-16 h-16 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6 text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                            <i data-lucide="lock" class="w-10 h-10 text-[#8b8196] text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center text-center"></i>
                         </div>
-                        <h3 class="text-2xl font-bold font-brand mb-4 text-[#1A1A1A] text-center text-center text-center text-center text-center">管理員驗證</h3>
-                        <p class="text-sm text-gray-500 mb-6 leading-relaxed text-center text-center text-center text-center text-center">請輸入管理密碼以進入編輯模式</p>
+                        <h3 class="text-2xl font-bold font-brand mb-4 text-[#1A1A1A] text-center text-center text-center text-center text-center text-center text-center text-center text-center">管理員驗證</h3>
+                        <p class="text-sm text-gray-500 mb-6 leading-relaxed text-center text-center text-center text-center text-center text-center text-center text-center">請輸入管理密碼以進入編輯模式</p>
                         <input v-model="passwordInput" type="password" @keyup.enter="verifyPassword"
                                :class="passwordError ? 'border-red-500 ring-red-100' : 'border-gray-200 focus:ring-[#8b8196]/20'"
-                               class="w-full px-6 py-4 bg-white border rounded-2xl outline-none focus:ring-4 transition-all mb-4 text-center font-bold tracking-widest text-sm text-center text-center"
+                               class="w-full px-6 py-4 bg-white border rounded-2xl outline-none focus:ring-4 transition-all mb-4 text-center font-bold tracking-widest text-sm text-center text-center text-center text-center"
                                placeholder="輸入密碼">
-                        <p v-if="passwordError" class="text-xs text-red-500 mb-6 font-bold text-center text-center text-center text-center text-center">密碼不正確</p>
-                        <div class="flex gap-4 justify-center text-center text-center text-center text-center text-center text-center">
-                            <button @click="showPasswordModal = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 transition-colors text-sm text-center text-center text-center">取消</button>
-                            <button @click="verifyPassword" class="flex-1 py-4 bg-[#8b8196] text-white rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all text-sm text-center text-center text-center">確認進入</button>
+                        <p v-if="passwordError" class="text-xs text-red-500 mb-6 font-bold text-center text-center text-center text-center text-center text-center">密碼不正確</p>
+                        <div class="flex gap-4 justify-center text-center text-center text-center text-center text-center text-center text-center text-center text-center">
+                            <button @click="showPasswordModal = false" class="flex-1 py-4 bg-gray-100 rounded-2xl font-bold text-gray-500 hover:bg-gray-200 transition-colors text-sm text-center text-center text-center text-center">取消</button>
+                            <button @click="verifyPassword" class="flex-1 py-4 bg-[#8b8196] text-white rounded-2xl font-bold shadow-lg hover:brightness-110 transition-all text-sm text-center text-center text-center text-center text-center">確認進入</button>
                         </div>
                     </div>
                 </div>
@@ -519,12 +521,9 @@
                 const user = ref(null);
                 let unsubscribeSnapshot = null;
 
-                // 清空初始資料
                 const menu = ref({
                     storeName: "", logo: null, address: "", phone: "",
-                    teishokuDesc: "", teishokuDescEn: "", teishokuRefill: "", teishokuRefillEn: "",
-                    footerNotices: [], 
-                    alcoholNotices: [], // 新增酒精標語欄位
+                    footerNotices: [], alcoholNotices: [],
                     categories: [], content: {}
                 });
 
@@ -539,35 +538,33 @@
                         if (docSnap.exists()) {
                             if (!isEditMode.value) {
                                 const data = docSnap.data();
-                                // 數據相容性校正
                                 if (!data.footerNotices) data.footerNotices = [];
-                                if (!data.alcoholNotices) data.alcoholNotices = getDefaultAlcNotices();
+                                if (!data.alcoholNotices) data.alcoholNotices = [];
                                 menu.value = data;
                             }
+                            isSystemReady.value = true;
+                            const preLoader = document.getElementById('pre-loader-static');
+                            if (preLoader) preLoader.remove();
                         } else {
                             initEmptyMenu();
+                            isSystemReady.value = true;
+                            const preLoader = document.getElementById('pre-loader-static');
+                            if (preLoader) preLoader.remove();
                         }
-                        isSystemReady.value = true;
-                        const preLoader = document.getElementById('pre-loader-static');
-                        if (preLoader) preLoader.remove();
                     }, (err) => {
                         console.error("同步失敗:", err);
                         isSystemReady.value = true;
                     });
                 };
 
-                const getDefaultAlcNotices = () => [
-                    { id: 1, text: "未滿十八歲禁止飲酒。" },
-                    { id: 2, text: "No alcohol for persons under 18." },
-                    { id: 3, text: "開車不喝酒，酒後不開車。" },
-                    { id: 4, text: "Don’t drink and drive." }
-                ];
-
                 const initEmptyMenu = () => {
                     menu.value = {
-                        storeName: "慕Mu 日式定食", logo: null, address: "台北市文青區", phone: "02-1234-5678",
-                        footerNotices: [{ id: 1, text: "歡迎光臨", textEn: "Welcome" }],
-                        alcoholNotices: getDefaultAlcNotices(),
+                        storeName: "慕Mu 日式定食", logo: null, address: "台南市中西區", phone: "06-2230156",
+                        footerNotices: [{ id: 1, text: "餐點現點現做", textEn: "Made to order" }],
+                        alcoholNotices: [
+                            { id: 1, text: "未滿十八歲禁止飲酒。" },
+                            { id: 2, text: "No alcohol for persons under 18." }
+                        ],
                         categories: [{ id: 'teishoku', name: '定食', nameEn: 'SET MEAL', subCategories: [{id: 'raw', name: '生', nameEn: 'RAW'}] }],
                         content: { teishoku: { raw: [] } }
                     };
